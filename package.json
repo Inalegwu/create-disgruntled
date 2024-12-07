@@ -1,0 +1,26 @@
+{
+	"name": "create-disgruntled-app",
+	"module": "src/main.ts",
+	"type": "module",
+	"version": "0.0.1",
+	"scripts": {
+		"compile": "bun build --target=node --compile --minify --sourcemap --bytecode src/main.ts --outfile disgruntled",
+		"dev": "bun run build && ./disgruntled desktop",
+		"lint:check": "biome lint ./src",
+		"lint:format": "biome format --write ./src"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^1.9.4",
+		"@types/bun": "latest"
+	},
+	"peerDependencies": {
+		"typescript": "^5.0.0"
+	},
+	"dependencies": {
+		"@effect/cli": "^0.49.4",
+		"@effect/platform": "^0.70.4",
+		"@effect/platform-bun": "^0.50.4",
+		"effect": "^3.11.3"
+	},
+	"trustedDependencies": ["@biomejs/biome", "@parcel/watcher"]
+}
