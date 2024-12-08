@@ -2,56 +2,56 @@ import { Args, Command } from '@effect/cli';
 import { $ } from 'bun';
 import { Data, Effect, Option } from 'effect';
 
-class MobileError extends Data.TaggedError('mobile-error')<{
+class CliError extends Data.TaggedError('cli-error')<{
   cause: unknown;
 }> {}
 
-const name = Args.text({
-  name: 'projectName',
-}).pipe(Args.optional);
+const name = Args.text({ name: 'projectName' }).pipe(Args.optional);
 
-export const mobile = Command.make('mobile', { name }, ({ name }) =>
+export const cli = Command.make('cli', { name }, ({ name }) =>
   Effect.gen(function* () {
     yield* Option.match(name, {
       onSome: (projectName) =>
         Effect.gen(function* () {
-          yield* Effect.log(`Creating Mobile Project ${projectName}`);
+          yield* Effect.logInfo(
+            `Creating CLI Project with Name "${projectName}"`,
+          );
 
           yield* Effect.tryPromise({
             try: async () => {
               const lines =
-                $`git clone https://github.com/Inalegwu/Spawnpoint ${projectName}`.lines();
+                $`git clone https://github.com/Inalegwu/Gaze ${projectName}`.lines();
 
               for await (const line of lines) {
                 console.log(line);
               }
             },
-            catch: (cause) => new MobileError({ cause }),
+            catch: (cause) => new CliError({ cause }),
           });
         }),
       onNone: () =>
         Effect.gen(function* () {
-          yield* Effect.logInfo('Creating Mobile Project With Default Name');
+          yield* Effect.logInfo('Creating CLI Project with Default Name');
 
           yield* Effect.tryPromise({
             try: async () => {
               const lines =
-                $`git clone https://github.com/Inalegwu/Spawnpoint disgruntled_mobile`.lines();
+                $`git clone https://github.com/Inalegwu/Gaze my_cli`.lines();
 
               for await (const line of lines) {
                 console.log(line);
               }
             },
-            catch: (cause) => new MobileError({ cause }),
+            catch: (cause) => new CliError({ cause }),
           });
         }),
     });
   }).pipe(
     Effect.catchTags({
-      'mobile-error': (error) =>
+      'cli-error': (error) =>
         Effect.gen(function* () {
-          yield* Effect.log(
-            `An error occurred attempting to create your mobile project ${error.cause}`,
+          yield* Effect.logInfo(
+            `Error occurred while creating your CLI Project: ${error.cause}`,
           );
         }),
     }),
