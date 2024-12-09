@@ -3,21 +3,19 @@ import { Args, Command } from '@effect/cli';
 import { $ } from 'bun';
 import { Effect, Option } from 'effect';
 
-const name = Args.text({
-  name: 'projectName',
-}).pipe(Args.optional);
+const name = Args.text({ name: 'projectName' }).pipe(Args.optional);
 
-export const desktop = Command.make('desktop', { name }, ({ name }) =>
+export const api = Command.make('api', { name }, ({ name }) =>
   Effect.gen(function* () {
     yield* Option.match(name, {
       onSome: (projectName) =>
         Effect.gen(function* () {
-          yield* Effect.logInfo(`Creating Desktop Project ${name}`);
+          yield* Effect.logInfo(`Creating API Project ${projectName}`);
 
           yield* Effect.tryPromise({
             try: async () => {
               const lines =
-                $`git clone https://github.com/Inalegwu/ElectroStatic ${projectName}`.lines();
+                $`git clone https://github.com/Inalegwu/Martini ${projectName}`.lines();
 
               for await (const line of lines) {
                 console.log(line);
@@ -28,12 +26,12 @@ export const desktop = Command.make('desktop', { name }, ({ name }) =>
         }),
       onNone: () =>
         Effect.gen(function* () {
-          yield* Effect.logInfo('Creating Desktop Project with Default Name');
+          yield* Effect.logInfo('Creating API Project With Default Name');
 
           yield* Effect.tryPromise({
             try: async () => {
               const lines =
-                $`git clone https://github.com/Inalegwu/ElectroStatic disgruntled_desktop`.lines();
+                $`git clone https://github.com/Inalegwu/Martini my_api`.lines();
 
               for await (const line of lines) {
                 console.log(line);
@@ -43,14 +41,5 @@ export const desktop = Command.make('desktop', { name }, ({ name }) =>
           });
         }),
     });
-  }).pipe(
-    Effect.catchTags({
-      'command-error': (error) =>
-        Effect.gen(function* () {
-          yield* Effect.logInfo(
-            `An error occurred attempting to create your desktop project ${String(error.cause).includes('128') ? 'NetworkError' : ''}`,
-          );
-        }),
-    }),
-  ),
+  }).pipe(Effect.catchTags({})),
 );

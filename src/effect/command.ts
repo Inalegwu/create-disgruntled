@@ -1,14 +1,11 @@
+import { CommandError } from '@/error';
 import { Args, Command } from '@effect/cli';
 import { $ } from 'bun';
-import { Data, Effect, Option } from 'effect';
-
-class CliError extends Data.TaggedError('cli-error')<{
-  cause: unknown;
-}> {}
+import { Effect, Option } from 'effect';
 
 const name = Args.text({ name: 'projectName' }).pipe(Args.optional);
 
-export const cli = Command.make('cli', { name }, ({ name }) =>
+export const effect = Command.make('effect', { name }, ({ name }) =>
   Effect.gen(function* () {
     yield* Option.match(name, {
       onSome: (projectName) =>
@@ -26,7 +23,7 @@ export const cli = Command.make('cli', { name }, ({ name }) =>
                 console.log(line);
               }
             },
-            catch: (cause) => new CliError({ cause }),
+            catch: (cause) => new CommandError({ cause }),
           });
         }),
       onNone: () =>
@@ -42,13 +39,13 @@ export const cli = Command.make('cli', { name }, ({ name }) =>
                 console.log(line);
               }
             },
-            catch: (cause) => new CliError({ cause }),
+            catch: (cause) => new CommandError({ cause }),
           });
         }),
     });
   }).pipe(
     Effect.catchTags({
-      'cli-error': (error) =>
+      'command-error': (error) =>
         Effect.gen(function* () {
           yield* Effect.logInfo(
             `Error occurred while creating your CLI Project: ${error.cause}`,

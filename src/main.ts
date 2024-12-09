@@ -1,13 +1,14 @@
+import { api } from '@/api/command';
+import { desktop } from '@/desktop/command';
+import { effect } from '@/effect/command';
+import { mobile } from '@/mobile/command';
 import { Command } from '@effect/cli';
 import { BunContext, BunRuntime } from '@effect/platform-bun';
 import { Effect } from 'effect';
 import pkg from '../package.json';
-import { cli } from './cli/command';
-import { desktop } from './desktop/command';
-import { mobile } from './mobile/command';
 
 const main = Command.make('disgruntled').pipe(
-  Command.withSubcommands([desktop, mobile, cli]),
+  Command.withSubcommands([desktop, mobile, effect, api]),
 );
 
 const program = Command.run(main, {

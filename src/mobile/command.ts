@@ -1,10 +1,7 @@
+import { CommandError } from '@/error';
 import { Args, Command } from '@effect/cli';
 import { $ } from 'bun';
-import { Data, Effect, Option } from 'effect';
-
-class MobileError extends Data.TaggedError('mobile-error')<{
-  cause: unknown;
-}> {}
+import { Effect, Option } from 'effect';
 
 const name = Args.text({
   name: 'projectName',
@@ -26,7 +23,7 @@ export const mobile = Command.make('mobile', { name }, ({ name }) =>
                 console.log(line);
               }
             },
-            catch: (cause) => new MobileError({ cause }),
+            catch: (cause) => new CommandError({ cause }),
           });
         }),
       onNone: () =>
@@ -42,13 +39,13 @@ export const mobile = Command.make('mobile', { name }, ({ name }) =>
                 console.log(line);
               }
             },
-            catch: (cause) => new MobileError({ cause }),
+            catch: (cause) => new CommandError({ cause }),
           });
         }),
     });
   }).pipe(
     Effect.catchTags({
-      'mobile-error': (error) =>
+      'command-error': (error) =>
         Effect.gen(function* () {
           yield* Effect.log(
             `An error occurred attempting to create your mobile project ${error.cause}`,
