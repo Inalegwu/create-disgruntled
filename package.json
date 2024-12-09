@@ -5,9 +5,10 @@
 	"version": "0.0.1",
 	"scripts": {
 		"compile": "bun build --target=node --compile --minify --sourcemap --bytecode src/main.ts --outfile create-disgruntled-app",
-		"dev": "bun run build && ./disgruntled desktop",
+		"dev": "bun compile && ./create-disgruntled-app --wizard",
 		"lint:check": "biome lint ./src",
-		"lint:format": "biome format --write ./src"
+		"lint:format": "biome format --write ./src",
+		"typecheck": "bunx tsc --noEmit"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^1.9.4",
