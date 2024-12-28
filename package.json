@@ -4,7 +4,7 @@
 	"type": "module",
 	"version": "0.0.1",
 	"scripts": {
-		"compile": "bun build --target=node --compile --minify --sourcemap --bytecode src/main.ts --outfile create-disgruntled-app",
+		"compile": "bun build --target=node --compile --minify --sourcemap src/main.ts --outfile ./bin/create-disgruntled-app",
 		"dev": "bun compile && ./create-disgruntled-app --wizard",
 		"lint:check": "biome lint ./src",
 		"lint:format": "biome format --write ./src",
