@@ -1,0 +1,52 @@
+{
+  "name": "",
+  "description": "",
+  "version": "0.0.1",
+  "license": "MIT",
+  "main": "out/main/main.js",
+  "scripts": {
+    "start": "electron-vite preview",
+    "dev": "electron-vite dev -w",
+    "prebuild": "electron-vite build",
+    "build": "pnpm tsx build.ts"
+  },
+  "dependencies": {
+    "@electron/rebuild": "^3.6.0",
+    "@legendapp/state": "^2.1.14",
+    "@radix-ui/themes": "^2.0.3",
+    "@tanstack/react-query": "^4.36.1",
+    "@tanstack/react-router": "^1.48.4",
+    "@trpc/client": "^10.45.2",
+    "@trpc/react-query": "^10.45.2",
+    "@trpc/server": "^10.45.2",
+    "electron-trpc": "^0.5.2",
+    "lucide-react": "^0.468.0",
+    "motion": "^11.13.1",
+    "neverthrow": "^8.1.1",
+    "pouchdb-find": "^9.0.0",
+    "pouchdb-node": "^9.0.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-error-boundary": "^4.0.13",
+    "relational-pouch": "^4.1.1",
+    "sort-by": "^1.2.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "1.7.3",
+    "@tanstack/router-devtools": "^1.48.4",
+    "@tanstack/router-vite-plugin": "^1.48.6",
+    "@types/node": "^20.16.1",
+    "@types/pouchdb": "^6.4.2",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "electron": "^28.3.3",
+    "electron-builder": "^24.13.3",
+    "electron-vite": "^2.3.0",
+    "tsx": "^4.17.0",
+    "typescript": "^5.5.4",
+    "unocss": "^0.58.9",
+    "vite": "^5.4.2"
+  }
+}

@@ -7,15 +7,19 @@ const framework = Options.choice('variant', ['reactjs', 'solidjs']).pipe(
   Options.withAlias('v'),
   Options.optional,
 );
+const packageManager = Options.choice('variant', ['pnpm', 'npm', 'yarn']).pipe(
+  Options.withAlias('p'),
+  Options.optional,
+);
 
 export const desktop = Command.make(
   'desktop',
-  { name, framework },
-  ({ name, framework }) =>
+  { name, framework, packageManager },
+  ({ name, framework, packageManager }) =>
     Effect.gen(function* () {
       yield* Option.match(framework, {
-        onNone: () => handleCreate('reactjs', name),
-        onSome: (variant) => handleCreate(variant, name),
+        onNone: () => handleCreate('reactjs', name, packageManager),
+        onSome: (variant) => handleCreate(variant, name, packageManager),
       });
     }),
 );
@@ -23,6 +27,7 @@ export const desktop = Command.make(
 function handleCreate(
   template: 'reactjs' | 'solidjs',
   name: Option.Option<string>,
+  packageManager: Option.Option<'pnpm' | 'npm' | 'yarn'>,
 ) {
   return Effect.gen(function* () {
     const templateGen = yield* Init;
@@ -33,10 +38,12 @@ function handleCreate(
       )} with Template ${template}`,
     );
 
+    const pm = Option.getOrElse(packageManager, () => 'pnpm' as const);
+
     yield* templateGen.init(name, {
       command: 'desktop',
       template: Option.some(template),
-      manager: Option.none(),
+      manager: Option.some(pm),
     });
   }).pipe(Effect.provide(Init.Default), Effect.orDie);
 }

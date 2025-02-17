@@ -1,6 +1,8 @@
 import { FileSystem, Path } from '@effect/platform';
-import { Data, Effect, Match, Option, Schema } from 'effect';
-import { TemplateSchema } from './schema';
+import { Array, Data, Effect, Match, Option, Schema } from 'effect';
+import child_proc from 'node:child_process';
+import { username } from 'username';
+import { type TTemplateSchema, TemplateSchema } from './schema';
 
 class InitError extends Data.TaggedError('template-error')<{
   cause: unknown;
@@ -19,6 +21,7 @@ export class Init extends Effect.Service<Init>()(
     effect: Effect.gen(function* () {
       const fs_ = yield* FileSystem.FileSystem;
       const path_ = yield* Path.Path;
+      const thisUser = yield* Effect.tryPromise(async () => await username());
 
       const init = Effect.fn(function* (
         name: Option.Option<string>,
@@ -26,16 +29,15 @@ export class Init extends Effect.Service<Init>()(
       ) {
         const cmd = Option.getOrElse(opts.manager, () => 'npm' as const);
         const projectName = Option.getOrElse(name, () => 'my-project');
+        const projectDir = path_.join(process.cwd(), projectName);
         const template_ = Option.getOrElse(
           opts.template,
           () => 'default' as const,
         );
 
-        const projectDir = path_.join(process.cwd(), projectName);
-
-        yield* Effect.log(projectDir);
-
-        if (fs_.exists(projectDir)) {
+        // TODO: troubleshoot this, for some reason the directory already exists
+        if (!fs_.exists(projectDir)) {
+          yield* Effect.logError(`${projectDir} Already Exists`);
           yield* Effect.die(
             new InitError({
               cause: 'Project Directory Already Exists',
@@ -76,12 +78,56 @@ export class Init extends Effect.Service<Init>()(
           path_.join(templateDir, 'template.json'),
         );
 
-        const templateJSON = JSON.parse(templateJson);
+        const schema_ = yield* Schema.decodeUnknown(TemplateSchema)(
+          JSON.parse(templateJson),
+        );
 
-        const templateFromSchema =
-          yield* Schema.decodeUnknown(TemplateSchema)(templateJSON);
+        const newPackage = {
+          ...schema_,
+          name: projectName,
+          description: 'New DisrguntledDevs Project',
+          author: {
+            name: thisUser || '',
+            github: `https://github.com/${thisUser}/${projectName}`,
+          },
+        } satisfies TTemplateSchema;
 
-        yield* Effect.logInfo(templateFromSchema);
+        yield* fs_.copy(templateDir, projectDir, {
+          overwrite: false,
+          preserveTimestamps: false,
+        });
+
+        yield* fs_.rename(
+          path_.join(projectDir, 'template.json'),
+          path_.join(projectDir, 'package.json'),
+        );
+
+        yield* fs_.rename(
+          path_.join(projectDir, 'gitignore'),
+          path_.join(projectDir, '.gitignore'),
+        );
+
+        const deps = Array.fromRecord(newPackage.dependencies);
+        const devDeps = Array.fromRecord(newPackage.devDependencies);
+
+        const installDeps = Effect.try(() =>
+          child_proc.exec(`${cmd} add ${deps.join(' ')}`, {
+            cwd: projectDir,
+          }),
+        );
+        const installDevDeps = Effect.try(() =>
+          child_proc.exec(`${cmd} add -D ${devDeps.join(' ')}`, {
+            cwd: projectDir,
+          }),
+        );
+
+        yield* Effect.logInfo(
+          `Installing Project Dependencies via ${cmd}...this might take a few minutes`,
+        );
+
+        yield* Effect.all([installDeps, installDevDeps], {
+          concurrency: 2,
+        });
       });
 
       return { init } as const;
@@ -114,6 +160,8 @@ const getPackageManager = (value: {
     Match.when({ command: 'api', manager: 'bun' }, (_) => _.manager),
     Match.when({ command: 'api', manager: 'npm' }, (_) => _.manager),
     Match.when({ command: 'api', manager: 'pnpm' }, (_) => _.manager),
+    // TODO had to remove one Match.when statement here, Match.option can't take
+    // more than 20 parameters
     Match.option,
   );
 
