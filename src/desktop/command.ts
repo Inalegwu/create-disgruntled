@@ -1,56 +1,42 @@
-import { CommandError } from "@/error";
-import { Args, Command, Options } from "@effect/cli";
-import { $ } from "bun";
-import { Effect, Option } from "effect";
+import { Init } from '@/templates';
+import { Args, Command, Options } from '@effect/cli';
+import { Effect, Option } from 'effect';
 
-const name = Args.text({ name: "path" }).pipe(Args.withDefault("my_app"));
-const framework = Options.choice("variant", ["reactjs", "solidjs"]).pipe(
-  Options.withAlias("v"),
+const name = Args.text({ name: 'path' }).pipe(Args.optional);
+const framework = Options.choice('variant', ['reactjs', 'solidjs']).pipe(
+  Options.withAlias('v'),
   Options.optional,
 );
 
 export const desktop = Command.make(
-  "desktop",
+  'desktop',
   { name, framework },
   ({ name, framework }) =>
     Effect.gen(function* () {
       yield* Option.match(framework, {
-        onNone: () => handleCreate("solidjs", name),
+        onNone: () => handleCreate('reactjs', name),
         onSome: (variant) => handleCreate(variant, name),
       });
     }),
 );
 
-function handleCreate(framework: "reactjs" | "solidjs", name: string) {
+function handleCreate(
+  template: 'reactjs' | 'solidjs',
+  name: Option.Option<string>,
+) {
   return Effect.gen(function* () {
+    const templateGen = yield* Init;
+
     yield* Effect.logInfo(
-      `Creating Desktop Project @: ${name} with ${
-        framework === "reactjs" ? "React JS" : "Solid JS"
-      }`,
+      `Creating Desktop Project @: ${Option.getOrUndefined(
+        name,
+      )} with Template ${template}`,
     );
 
-    yield* Effect.tryPromise({
-      try: async () => {
-        const lines =
-          $`git clone https://github.com/Inalegwu/${framework==="reactjs"?"ElectroStatic":"Solidtron"} ${name}`
-            .lines();
-
-        for await (const line of lines) {
-          console.log(line);
-        }
-      },
-      catch: (cause) => new CommandError({ cause }),
+    yield* templateGen.init(name, {
+      command: 'desktop',
+      template: Option.some(template),
+      manager: Option.none(),
     });
-  }).pipe(
-    Effect.catchTags({
-      "command-error": (error) =>
-        Effect.gen(function* () {
-          yield* Effect.logError(
-            `An error occurred attempting to create your desktop project ${
-              String(error.cause).includes("128") ? "NetworkError" : ""
-            }`,
-          );
-        }),
-    }),
-  );
+  }).pipe(Effect.provide(Init.Default), Effect.orDie);
 }

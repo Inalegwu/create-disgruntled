@@ -1,33 +1,18 @@
-import { CommandError } from '@/error';
+import { Init } from '@/templates';
 import { Args, Command } from '@effect/cli';
-import { $ } from 'bun';
-import { Effect } from 'effect';
+import { Effect, Option } from 'effect';
 
-const name = Args.text({ name: 'path' }).pipe(Args.withDefault('my_app'));
+const name = Args.text({ name: 'path' }).pipe(Args.optional);
 
 export const mobile = Command.make('mobile', { name }, ({ name }) =>
   Effect.gen(function* () {
     yield* Effect.log(`Creating Mobile Project @: ${name}`);
+    const gen = yield* Init;
 
-    yield* Effect.tryPromise({
-      try: async () => {
-        const lines =
-          $`git clone https://github.com/Inalegwu/Spawnpoint ${name}`.lines();
-
-        for await (const line of lines) {
-          console.log(line);
-        }
-      },
-      catch: (cause) => new CommandError({ cause }),
+    yield* gen.init(name, {
+      command: 'mobile',
+      manager: Option.none(),
+      template: Option.none(),
     });
-  }).pipe(
-    Effect.catchTags({
-      'command-error': (error) =>
-        Effect.gen(function* () {
-          yield* Effect.logError(
-            `An error occurred attempting to create your mobile project ${error.cause}`,
-          );
-        }),
-    }),
-  ),
+  }).pipe(Effect.orDie, Effect.provide(Init.Default)),
 );

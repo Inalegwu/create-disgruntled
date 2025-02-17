@@ -5,7 +5,7 @@
 	"version": "0.0.1",
 	"scripts": {
 		"compile": "bun build --target=node --compile --minify --sourcemap src/main.ts --outfile ./bin/create-disgruntled-app",
-		"dev": "bun compile && ./create-disgruntled-app --wizard",
+		"dev": "bun compile && ./bin/create-disgruntled-app --wizard",
 		"lint:check": "biome lint ./src",
 		"lint:format": "biome format --write ./src",
 		"typecheck": "bunx tsc --noEmit"
@@ -15,13 +15,13 @@
 		"@types/bun": "latest"
 	},
 	"peerDependencies": {
-		"typescript": "^5.0.0"
+		"typescript": "^5.7.2"
 	},
 	"dependencies": {
-		"@effect/cli": "^0.49.4",
-		"@effect/platform": "^0.70.4",
-		"@effect/platform-bun": "^0.50.4",
-		"effect": "^3.11.3"
+		"@effect/cli": "^0.49.7",
+		"@effect/platform": "^0.70.7",
+		"@effect/platform-bun": "^0.50.7",
+		"effect": "^3.13.1"
 	},
 	"trustedDependencies": ["@biomejs/biome", "@parcel/watcher"]
 }
