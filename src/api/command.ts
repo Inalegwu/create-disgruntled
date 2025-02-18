@@ -7,11 +7,15 @@ const packageManager = Options.choice('variant', ['pnpm', 'npm', 'yarn']).pipe(
   Options.withAlias('p'),
   Options.optional,
 );
+const createGitRepo = Options.boolean('git-init').pipe(
+  Options.withAlias('-g'),
+  Options.optional,
+);
 
 export const api = Command.make(
   'api',
-  { name, packageManager },
-  ({ name, packageManager }) =>
+  { name, packageManager, createGitRepo },
+  ({ name, packageManager, createGitRepo }) =>
     Effect.gen(function* () {
       const gen = yield* Init;
 
@@ -19,7 +23,7 @@ export const api = Command.make(
         command: 'api',
         manager: packageManager,
         template: Option.none(),
-        shouldGitInit: Option.some(false),
+        shouldGitInit: createGitRepo,
       });
     }).pipe(
       Effect.catchAll((e) => Effect.logError(`${e._tag}:${e.message}`)),

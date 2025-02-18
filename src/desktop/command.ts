@@ -11,15 +11,21 @@ const packageManager = Options.choice('variant', ['pnpm', 'npm', 'yarn']).pipe(
   Options.withAlias('p'),
   Options.optional,
 );
+const createGitRepo = Options.boolean('git-init').pipe(
+  Options.withAlias('g'),
+  Options.optional,
+);
 
 export const desktop = Command.make(
   'desktop',
-  { name, framework, packageManager },
-  ({ name, framework, packageManager }) =>
+  { name, framework, packageManager, createGitRepo },
+  ({ name, framework, packageManager, createGitRepo }) =>
     Effect.gen(function* () {
       yield* Option.match(framework, {
-        onNone: () => handleCreate('reactjs', name, packageManager),
-        onSome: (variant) => handleCreate(variant, name, packageManager),
+        onNone: () =>
+          handleCreate('reactjs', name, packageManager, createGitRepo),
+        onSome: (variant) =>
+          handleCreate(variant, name, packageManager, createGitRepo),
       });
     }),
 );
@@ -28,17 +34,16 @@ function handleCreate(
   template: 'reactjs' | 'solidjs',
   name: Option.Option<string>,
   packageManager: Option.Option<'pnpm' | 'npm' | 'yarn'>,
+  createGitRepo: Option.Option<boolean>,
 ) {
   return Effect.gen(function* () {
     const templateGen = yield* Init;
 
-    const pm = Option.getOrElse(packageManager, () => 'pnpm' as const);
-
     yield* templateGen.init(name, {
       command: 'desktop',
       template: Option.some(template),
-      manager: Option.some(pm),
-      shouldGitInit: Option.some(false),
+      manager: packageManager,
+      shouldGitInit: createGitRepo,
     });
   }).pipe(
     Effect.provide(Init.Default),
