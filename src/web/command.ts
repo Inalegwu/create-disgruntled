@@ -1,6 +1,5 @@
-import { CommandError } from '@/error';
+import { Init } from '@/templates';
 import { Args, Command, Options } from '@effect/cli';
-import { $ } from 'bun';
 import { Effect, Option } from 'effect';
 
 const name = Args.text({ name: 'path' }).pipe(Args.withDefault('my_app'));
@@ -8,42 +7,42 @@ const framework = Options.choice('variant', ['nextjs', 'remix']).pipe(
   Options.withAlias('v'),
   Options.optional,
 );
+const packageManager = Options.choice('variant', ['pnpm', 'npm', 'yarn']).pipe(
+  Options.withAlias('p'),
+  Options.optional,
+);
 
 export const web = Command.make(
   'web',
-  { name, framework },
-  ({ name, framework }) =>
+  { name, framework, packageManager },
+  ({ name, framework, packageManager }) =>
     Effect.gen(function* () {
       yield* Option.match(framework, {
-        onNone: () => handleCreate('nextjs', name),
-        onSome: (value) => handleCreate(value, name),
+        onNone: () => handleCreate('nextjs', name, packageManager),
+        onSome: (value) => handleCreate(value, name, packageManager),
       });
     }),
 );
 
-function handleCreate(variant: 'nextjs' | 'remix', name: string) {
+function handleCreate(
+  variant: 'nextjs' | 'remix',
+  name: string,
+  packageManager: Option.Option<'pnpm' | 'npm' | 'yarn' | 'bun'>,
+) {
   return Effect.gen(function* () {
     yield* Effect.logInfo(
       `Creating Project @: ${name} with ${variant === 'nextjs' ? 'Next JS' : 'Remix'}`,
     );
 
-    yield* Effect.tryPromise({
-      try: async () => {
-        const lines =
-          $`git clone https://github.com/Inalegwu/${variant === 'nextjs' ? 'Spectron' : 'BluePrint'} ${name}`.lines();
+    const gen = yield* Init;
 
-        for await (const line of lines) {
-          console.log(line);
-        }
-      },
-      catch: (cause) => new CommandError({ cause }),
+    yield* gen.init(Option.some(name), {
+      command: 'web',
+      manager: packageManager,
+      template: Option.none(),
     });
   }).pipe(
-    Effect.catchTags({
-      'command-error': (error) =>
-        Effect.gen(function* () {
-          yield* Effect.logError(`Error creating your API App ${error.cause}`);
-        }),
-    }),
+    Effect.catchAll((e) => Effect.logError(e.message)),
+    Effect.provide(Init.Default),
   );
 }

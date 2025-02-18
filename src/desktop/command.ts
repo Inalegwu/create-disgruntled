@@ -32,18 +32,19 @@ function handleCreate(
   return Effect.gen(function* () {
     const templateGen = yield* Init;
 
-    yield* Effect.logInfo(
-      `Creating Desktop Project @: ${Option.getOrUndefined(
-        name,
-      )} with Template ${template}`,
-    );
-
     const pm = Option.getOrElse(packageManager, () => 'pnpm' as const);
 
     yield* templateGen.init(name, {
       command: 'desktop',
       template: Option.some(template),
       manager: Option.some(pm),
+      shouldGitInit: Option.some(false),
     });
-  }).pipe(Effect.provide(Init.Default), Effect.orDie);
+  }).pipe(
+    Effect.provide(Init.Default),
+    Effect.catchAll((e) => Effect.logError(`${e._tag}:${e.message}`)),
+    Effect.annotateLogs({
+      command: 'desktop',
+    }),
+  );
 }

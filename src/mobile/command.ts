@@ -1,18 +1,31 @@
 import { Init } from '@/templates';
-import { Args, Command } from '@effect/cli';
+import { Args, Command, Options } from '@effect/cli';
 import { Effect, Option } from 'effect';
 
 const name = Args.text({ name: 'path' }).pipe(Args.optional);
+const packageManager = Options.choice('variant', ['pnpm', 'npm', 'yarn']).pipe(
+  Options.withAlias('p'),
+  Options.optional,
+);
 
-export const mobile = Command.make('mobile', { name }, ({ name }) =>
-  Effect.gen(function* () {
-    yield* Effect.log(`Creating Mobile Project @: ${name}`);
-    const gen = yield* Init;
+export const mobile = Command.make(
+  'mobile',
+  { name, packageManager },
+  ({ name, packageManager }) =>
+    Effect.gen(function* () {
+      const gen = yield* Init;
 
-    yield* gen.init(name, {
-      command: 'mobile',
-      manager: Option.none(),
-      template: Option.none(),
-    });
-  }).pipe(Effect.orDie, Effect.provide(Init.Default)),
+      yield* gen.init(name, {
+        command: 'mobile',
+        manager: packageManager,
+        template: Option.none(),
+        shouldGitInit: Option.some(false),
+      });
+    }).pipe(
+      Effect.catchAll((e) => Effect.logError(`${e._tag}:${e.message}`)),
+      Effect.provide(Init.Default),
+      Effect.annotateLogs({
+        command: 'mobile',
+      }),
+    ),
 );
